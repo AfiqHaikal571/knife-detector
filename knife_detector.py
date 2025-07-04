@@ -1,8 +1,7 @@
 import streamlit as st
-import cv2
+from PIL import Image
 import numpy as np
 from ultralytics import YOLO
-from PIL import Image
 
 @st.cache_resource
 def load_model():
@@ -10,17 +9,25 @@ def load_model():
 
 model = load_model()
 
-st.title("🔪 Knife Detection Demo")
+st.title("🔪 Knife Detection (Upload Image)")
+
 uploaded_file = st.file_uploader("Upload an image", type=['jpg', 'png', 'jpeg'])
 
 if uploaded_file is not None:
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    image = cv2.imdecode(file_bytes, 1)
+    # Read image using PIL
+    image = Image.open(uploaded_file).convert("RGB")
 
-    st.image(image, caption='Uploaded Image', use_column_width=True)
+    # Convert to numpy array (YOLOv8 needs this)
+    image_np = np.array(image)
+
+    # Show original image
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
     # Run detection
-    results = model.predict(image)
-    annotated_frame = results[0].plot()
+    results = model.predict(image_np)
 
-    st.image(annotated_frame, caption='Detection Result', use_column_width=True)
+    # Plot results
+    annotated = results[0].plot()
+
+    # Show annotated image
+    st.image(annotated, caption="Detection Result", use_column_width=True)
